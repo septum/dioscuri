@@ -10,6 +10,7 @@ use dioscuri::SkipServerVerification;
 const PROTOCOL: &str = "gemini://";
 const HOST: &str = "geminiprotocol.net";
 const PORT: usize = 1965;
+const PATH: &str = "/";
 
 fn main() -> Result<(), Box<dyn Error>> {
     let client_config = rustls::ClientConfig::builder()
@@ -27,7 +28,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // https://geminiprotocol.net/docs/protocol-specification.gmi#requests
     // - Needs trailing `/` otherwise it redirects (status 3X)
     // - Must end with CRLF
-    let request = format!("{}{}/\r\n", PROTOCOL, HOST);
+    let request = format!("{}{}{}\r\n", PROTOCOL, HOST, PATH);
     print!("Request: {}", request);
     tls.write_all(request.as_bytes())?;
 
