@@ -4,5 +4,6 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-rustls = "0.23.23"
-textwrap = "0.16.1"
+rustls = "0.23"
+textwrap = "0.16"
+webpki-roots = "0.26.8"
