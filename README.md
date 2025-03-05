@@ -1,16 +1,17 @@
 # dioscuri
 
-A simple Gemini protocol client
+A mingy graphical browser for the Gemini protocol.
 
-## Disclaimer
-
-This is a work in progress.
+> [!NOTE]
+> This is a work in progress.
 
 ## Inspired by
 
 - https://geminiprotocol.net/
 - https://www.youtube.com/watch?v=5YSj7mAAQQ0
 - https://git.sr.ht/~solderpunk/gemini-demo-go/tree/master/item/gemini-demo.go
+- https://www.gpui.rs/
+- https://github.com/tsoding/voronoi-browser
 
 ## License
 
