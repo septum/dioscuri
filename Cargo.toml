@@ -7,3 +7,4 @@ edition = "2024"
 rustls = "0.23"
 textwrap = "0.16"
 webpki-roots = "0.26.8"
+gpui = { git = "https://github.com/zed-industries/zed" }
