@@ -5,12 +5,58 @@ use std::{
     sync::Arc,
 };
 
+use gpui::{
+    App, Application, Bounds, Context, SharedString, Window, WindowBounds, WindowOptions, div,
+    prelude::*, px, rgb,
+};
+
 use dioscuri::SkipServerVerification;
 
 const PROTOCOL: &str = "gemini://";
 const HOST: &str = "geminiprotocol.net";
 const PORT: usize = 1965;
 const PATH: &str = "/";
+
+struct BrowserWindow {
+    request: SharedString,
+    content: SharedString,
+}
+
+impl Render for BrowserWindow {
+    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
+        div()
+            .flex()
+            .flex_col()
+            .size_full()
+            .text_base()
+            .text_color(rgb(0xf7f7f7))
+            .bg(rgb(0x212121))
+            .child(
+                div()
+                    .flex()
+                    .justify_between()
+                    .px(px(20.0))
+                    .py(px(5.0))
+                    .border_b(px(1.))
+                    // https://meyerweb.com/eric/tools/color-blend/#131618:F7F7F7:7:hex
+                    .border_color(rgb(0x303234))
+                    .bg(rgb(0x131618))
+                    .child(format!("dioscuri | {}", self.request.trim()))
+                    .child(
+                        div()
+                            .child("X")
+                            .hover(|sr| sr.opacity(0.5).cursor_pointer())
+                            .on_mouse_down(gpui::MouseButton::Left, |_, _, cx| cx.quit()),
+                    ),
+            )
+            .child(
+                div()
+                    .p(px(20.))
+                    .max_w(px(1200.))
+                    .child(self.content.to_owned()),
+            )
+    }
+}
 
 fn main() -> Result<(), Box<dyn Error>> {
     let client_config = rustls::ClientConfig::builder()
@@ -20,7 +66,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut connection = rustls::ClientConnection::new(Arc::new(client_config), HOST.try_into()?)?;
     let mut socket = TcpStream::connect(format!("{}:{}", HOST, PORT))?;
 
-    println!("Connected - IP: {}\n", socket.peer_addr()?.ip());
+    println!("Connected to IP: {}", socket.peer_addr()?.ip());
 
     // From https://github.com/rustls/rustls/blob/main/examples/src/bin/simpleclient.rs
     let mut tls = rustls::Stream::new(&mut connection, &mut socket);
@@ -29,7 +75,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // - Needs trailing `/` otherwise it redirects (status 3X)
     // - Must end with CRLF
     let request = format!("{}{}{}\r\n", PROTOCOL, HOST, PATH);
-    print!("Request: {}", request);
+    println!("Request: {}", request.trim());
     tls.write_all(request.as_bytes())?;
 
     let mut header = Vec::new();
@@ -42,8 +88,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // - {status}{SP}{mimetype|URI-reference|errormsg}{CRLF}{body?}
     let (status_str, meta) = header.split_at(space_pos);
     let status = status_str[..1].parse::<u8>()?;
-    println!("\nResponse:");
-    println!("- Status: {}X", status);
+    println!("Response Status: {}X", status);
 
     match status {
         1 | 3 | 6 => println!("Unsupported feature..."),
@@ -52,28 +97,27 @@ fn main() -> Result<(), Box<dyn Error>> {
             if !mime.starts_with("text/") {
                 println!("Unsupported mimetype: {}", mime)
             }
-            println!("- Body:");
+
+            // TODO: Handle body formatting with gpui
             let mut body = String::new();
             tls.read_to_string(&mut body)?;
-            if mime == "text/gemini" {
-                let mut preformatted = false;
-                for line in body.split('\n') {
-                    if line.starts_with("```") {
-                        preformatted = !preformatted;
-                    } else if preformatted {
-                        println!("{}", line);
-                    } else if line.starts_with("=>") {
-                        // TODO: Interact with the links
-                        println!("{}", line);
-                    } else {
-                        for wrapped_line in textwrap::wrap(line, 80) {
-                            println!("{}", wrapped_line);
-                        }
-                    }
-                }
-            } else {
-                print!("{}", body);
-            }
+
+            println!("Opening the browser window...");
+            Application::new().run(|cx: &mut App| {
+                cx.open_window(
+                    WindowOptions {
+                        window_bounds: Some(WindowBounds::Maximized(Bounds::maximized(None, cx))),
+                        ..Default::default()
+                    },
+                    |_, cx| {
+                        cx.new(|_| BrowserWindow {
+                            content: body.into(),
+                            request: request.into(),
+                        })
+                    },
+                )
+                .unwrap();
+            });
         }
         _ => println!("Error: {}", meta),
     }
