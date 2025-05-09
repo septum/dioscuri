@@ -1,3 +1,4 @@
 mod skip_server_verification;
 
-pub use crate::skip_server_verification::SkipServerVerification;
+pub mod browser;
+pub use skip_server_verification::SkipServerVerification;

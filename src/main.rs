@@ -5,58 +5,12 @@ use std::{
     sync::Arc,
 };
 
-use gpui::{
-    App, Application, Bounds, Context, SharedString, Window, WindowBounds, WindowOptions, div,
-    prelude::*, px, rgb,
-};
-
-use dioscuri::SkipServerVerification;
+use dioscuri::{SkipServerVerification, browser};
 
 const PROTOCOL: &str = "gemini://";
 const HOST: &str = "geminiprotocol.net";
 const PORT: usize = 1965;
-const PATH: &str = "/";
-
-struct BrowserWindow {
-    request: SharedString,
-    content: SharedString,
-}
-
-impl Render for BrowserWindow {
-    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
-        div()
-            .flex()
-            .flex_col()
-            .size_full()
-            .text_base()
-            .text_color(rgb(0xf7f7f7))
-            .bg(rgb(0x212121))
-            .child(
-                div()
-                    .flex()
-                    .justify_between()
-                    .px(px(20.0))
-                    .py(px(5.0))
-                    .border_b(px(1.))
-                    // https://meyerweb.com/eric/tools/color-blend/#131618:F7F7F7:7:hex
-                    .border_color(rgb(0x303234))
-                    .bg(rgb(0x131618))
-                    .child(format!("dioscuri | {}", self.request.trim()))
-                    .child(
-                        div()
-                            .child("X")
-                            .hover(|sr| sr.opacity(0.5).cursor_pointer())
-                            .on_mouse_down(gpui::MouseButton::Left, |_, _, cx| cx.quit()),
-                    ),
-            )
-            .child(
-                div()
-                    .p(px(20.))
-                    .max_w(px(1200.))
-                    .child(self.content.to_owned()),
-            )
-    }
-}
+const PATH: &str = "/docs/faq.gmi";
 
 fn main() -> Result<(), Box<dyn Error>> {
     let client_config = rustls::ClientConfig::builder()
@@ -98,26 +52,11 @@ fn main() -> Result<(), Box<dyn Error>> {
                 println!("Unsupported mimetype: {}", mime)
             }
 
-            // TODO: Handle body formatting with gpui
             let mut body = String::new();
             tls.read_to_string(&mut body)?;
 
             println!("Opening the browser window...");
-            Application::new().run(|cx: &mut App| {
-                cx.open_window(
-                    WindowOptions {
-                        window_bounds: Some(WindowBounds::Maximized(Bounds::maximized(None, cx))),
-                        ..Default::default()
-                    },
-                    |_, cx| {
-                        cx.new(|_| BrowserWindow {
-                            content: body.into(),
-                            request: request.into(),
-                        })
-                    },
-                )
-                .unwrap();
-            });
+            browser::run_app(request, body);
         }
         _ => println!("Error: {}", meta),
     }
