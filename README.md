@@ -9,11 +9,11 @@ A mingy graphical browser for the Gemini protocol.
 
 ## Roadmap
 
-1. Add edit capabilities to the address/request
-2. Add interaction with both gemini and other protocol links
-3. Implement essential window functionality
-4. Improve overall user experience
-5. Render gemtext appropiately
+- [ ] Add edit capabilities to the address/request
+- [ ] Add interaction with both gemini and other protocol links
+- [ ] Implement essential window functionality
+- [ ] Improve overall user experience
+- [ ] Render gemtext appropiately
 
 ## Inspired by
 
