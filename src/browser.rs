@@ -4,6 +4,7 @@ use bevy::{
     prelude::*,
     winit::WinitSettings,
 };
+use bevy_simple_text_input::{TextInput, TextInputPlugin, TextInputSettings, TextInputValue};
 
 #[derive(Component)]
 struct RequestNode;
@@ -41,10 +42,10 @@ fn setup(mut commands: Commands, body: Res<ResponseBody>, request: Res<RequestUr
             p.spawn((
                 Node {
                     width: Val::Percent(100.0),
-                    height: Val::Px(32.0),
                     padding: UiRect::px(16.0, 4.0, 2.0, 2.0),
                     flex_direction: FlexDirection::Row,
                     justify_content: JustifyContent::SpaceBetween,
+                    align_items: AlignItems::Center,
                     border: UiRect::bottom(Val::Px(1.0)),
                     ..default()
                 },
@@ -52,11 +53,24 @@ fn setup(mut commands: Commands, body: Res<ResponseBody>, request: Res<RequestUr
                 BackgroundColor(Color::srgb_u8(19, 22, 24)),
             ))
             .with_children(|p| {
-                p.spawn(Node::default()).with_children(|p| {
+                p.spawn(Node {
+                    height: Val::Px(35.0),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                })
+                .with_children(|p| {
                     p.spawn(Text("dioscuri | ".to_string()));
-                    p.spawn((Node::default(), RequestNode)).with_children(|p| {
-                        p.spawn(Text::new(request.0.clone()));
-                    });
+                    p.spawn((
+                        Node::default(),
+                        TextInput,
+                        TextInputValue(request.0.trim().to_string()),
+                        TextInputSettings {
+                            retain_on_submit: true,
+                            ..default()
+                        },
+                        RequestNode,
+                    ));
                 });
 
                 p.spawn((
@@ -145,6 +159,7 @@ pub fn run_app(request: String, body: String) {
             }),
             ..default()
         }))
+        .add_plugins(TextInputPlugin)
         .insert_resource(WinitSettings::desktop_app())
         .insert_resource(ResponseBody(body))
         .insert_resource(RequestUri(request))
