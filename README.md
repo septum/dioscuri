@@ -11,7 +11,7 @@ A mingy graphical browser for the Gemini protocol.
 
 - [ ] Add edit capabilities to the address/request
   - Checkout https://github.com/bevyengine/bevy/blob/main/examples/input/text_input.rs
-  - Checkout https://github.com/rparrett/bevy_simple_text_input
+  - Checkout https://github.com/rparrett/bevy_simple_text_input and https://github.com/ickshonpe/bevy_ui_text_input
 - [ ] Add interaction with both gemini and other protocol links
 - [ ] Implement essential window functionality
 - [ ] Improve overall user experience
