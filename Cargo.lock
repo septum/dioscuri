@@ -902,6 +902,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_simple_text_input"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "acab8a2ad55e92f65010ec9337c7dace7ac338a1f6d54f73c6a482a470fa2cf3"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
 name = "bevy_sprite"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1603,6 +1612,7 @@ name = "dioscuri"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bevy_simple_text_input",
  "rustls",
  "webpki-roots 0.26.11",
 ]
