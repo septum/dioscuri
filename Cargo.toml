@@ -2,30 +2,15 @@
 name = "dioscuri"
 version = "0.1.0"
 edition = "2024"
+authors = ["Orlando Valverde <orlando.jesig.va@gmail.com>"]
+license = "MIT OR Apache-2.0"
 
 [dependencies]
-bevy_simple_text_input = "0.11.0"
+color-eyre = "0.6"
+crossterm = "0.29"
+ratatui = "0.29"
 rustls = "0.23"
-webpki-roots = "0.26.8"
-
-[dependencies.bevy]
-features = [
-    "async_executor",
-    "bevy_core_pipeline",
-    "bevy_input_focus",
-    "bevy_picking",
-    "bevy_ui",
-    "bevy_ui_picking_backend",
-    "bevy_winit",
-    "default_font",
-    "dynamic_linking",
-    "multi_threaded",
-    "std",
-    "sysinfo_plugin",
-    "x11",
-]
-version = "0.16.0"
-default-features = false
+webpki-roots = "1.0"
 
 [profile.dev]
 opt-level = 1

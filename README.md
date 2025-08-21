@@ -1,6 +1,6 @@
 # dioscuri
 
-A mingy graphical browser for the Gemini protocol.
+A mingy TUI browser for the Gemini protocol.
 
 ![dioscuri screenshot](./screenshot.png)
 
