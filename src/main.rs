@@ -14,8 +14,8 @@ use ratatui::{
     style::Stylize,
     text::{Line, Text},
     widgets::{
-        Block, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, StatefulWidget, Widget,
-        Wrap,
+        Block, Paragraph, ScrollDirection, Scrollbar, ScrollbarOrientation, ScrollbarState,
+        StatefulWidget, Widget, Wrap,
     },
 };
 
@@ -24,14 +24,22 @@ use dioscuri::SkipServerVerification;
 const PROTOCOL: &str = "gemini://";
 const HOST: &str = "geminiprotocol.net";
 const PORT: usize = 1965;
-const PATH: &str = "/news/";
+const PATH: &str = "/docs/faq.gmi";
+
+const TICK_RATE: Duration = Duration::from_millis(300);
+
+#[derive(Default)]
+struct Scroll {
+    value: usize,
+    max: usize,
+    state: ScrollbarState,
+}
 
 #[derive(Default)]
 struct App {
     request: String,
     body: String,
-    vertical_scroll_state: ScrollbarState,
-    vertical_scroll: usize,
+    scroll: Scroll,
     exit: bool,
 }
 
@@ -45,14 +53,18 @@ impl App {
     }
 
     pub fn run(&mut self, terminal: &mut DefaultTerminal) -> Result<()> {
-        let tick_rate = Duration::from_millis(250);
+        terminal.draw(|frame| self.draw(frame))?;
+
         let mut last_tick = Instant::now();
 
         while !self.exit {
-            let timeout = tick_rate.saturating_sub(last_tick.elapsed());
-            self.handle_events(timeout)?;
-            if last_tick.elapsed() >= tick_rate {
+            let timeout = TICK_RATE.saturating_sub(last_tick.elapsed());
+
+            if self.handle_events(timeout)? {
                 terminal.draw(|frame| self.draw(frame))?;
+            }
+
+            if last_tick.elapsed() >= TICK_RATE {
                 last_tick = Instant::now();
             }
         }
@@ -64,7 +76,7 @@ impl App {
         frame.render_widget(self, frame.area());
     }
 
-    fn handle_events(&mut self, timeout: Duration) -> Result<()> {
+    fn handle_events(&mut self, timeout: Duration) -> Result<bool> {
         if event::poll(timeout)? {
             match event::read()? {
                 Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
@@ -73,24 +85,28 @@ impl App {
                             self.exit = true;
                         }
                         KeyCode::Down => {
-                            self.vertical_scroll = self.vertical_scroll.saturating_add(1);
-                            self.vertical_scroll_state =
-                                self.vertical_scroll_state.position(self.vertical_scroll);
+                            if self.scroll.value < self.scroll.max {
+                                self.scroll.state.scroll(ScrollDirection::Forward);
+                                self.scroll.value = self.scroll.value.saturating_add(1);
+                                return Ok(true);
+                            }
                         }
                         KeyCode::Up => {
-                            self.vertical_scroll = self.vertical_scroll.saturating_sub(1);
-                            self.vertical_scroll_state =
-                                self.vertical_scroll_state.position(self.vertical_scroll);
+                            if self.scroll.value > 0 {
+                                self.scroll.state.scroll(ScrollDirection::Backward);
+                                self.scroll.value = self.scroll.value.saturating_sub(1);
+                                return Ok(true);
+                            }
                         }
                         _ => {}
                     }
                 }
-                Event::Mouse(_) => {}
+                Event::Resize(_, _) => return Ok(true),
                 _ => {}
             }
         }
 
-        Ok(())
+        Ok(false)
     }
 }
 
@@ -101,31 +117,36 @@ impl Widget for &mut App {
         let request = Text::from(self.request.clone());
 
         let body_block = Block::bordered();
-        let body_lines: Vec<Line> = self
-            .body
-            .lines()
-            .map(|l| Line::from(l.replace("\t", " ")))
-            .collect();
 
         let [top, bottom] =
             Layout::vertical([Constraint::Length(3), Constraint::Fill(1)]).areas(area);
-
-        self.vertical_scroll_state = self.vertical_scroll_state.content_length(body_lines.len());
 
         Paragraph::new(request)
             .block(request_block)
             .render(top, buf);
 
-        Paragraph::new(body_lines)
+        let body_paragraph = Paragraph::new(self.body.replace("\t", " "))
             .block(body_block)
             .wrap(Wrap { trim: false })
-            .scroll((self.vertical_scroll as u16, 0))
-            .render(bottom, buf);
+            .scroll((self.scroll.value as u16, 0));
+
+        let body_lines = body_paragraph.line_count(bottom.width - 2);
+        let body_height = (bottom.height - 2) as usize;
+
+        let pages = body_lines / body_height;
+        let reminder_lines = body_lines % body_height;
+
+        self.scroll.max =
+            (body_height * pages.saturating_sub(1)) + if pages > 0 { reminder_lines } else { 0 };
+
+        self.scroll.state = self.scroll.state.content_length(self.scroll.max);
+
+        body_paragraph.render(bottom, buf);
 
         Scrollbar::new(ScrollbarOrientation::VerticalRight).render(
             bottom,
             buf,
-            &mut self.vertical_scroll_state,
+            &mut self.scroll.state,
         );
     }
 }
