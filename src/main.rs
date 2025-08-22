@@ -24,7 +24,7 @@ use dioscuri::SkipServerVerification;
 const PROTOCOL: &str = "gemini://";
 const HOST: &str = "geminiprotocol.net";
 const PORT: usize = 1965;
-const PATH: &str = "/docs/faq.gmi";
+const PATH: &str = "/news/";
 
 const TICK_RATE: Duration = Duration::from_millis(300);
 
