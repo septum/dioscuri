@@ -19,7 +19,6 @@ The current focus for this project is being able to browse through the hypertext
 - https://geminiprotocol.net/
 - https://www.youtube.com/watch?v=5YSj7mAAQQ0
 - https://git.sr.ht/~solderpunk/gemini-demo-go/tree/master/item/gemini-demo.go
-- https://www.gpui.rs/
 - https://github.com/tsoding/voronoi-browser
 
 ## License
