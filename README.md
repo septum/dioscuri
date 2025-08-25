@@ -2,7 +2,7 @@
 
 A mingy TUI browser for the Gemini protocol.
 
-![dioscuri screenshot](./screenshot.png)
+![dioscuri screencast](./screencast.gif)
 
 > [!NOTE]
 > This is a work in progress.
@@ -11,7 +11,7 @@ A mingy TUI browser for the Gemini protocol.
 
 The current focus for this project is being able to browse through the hypertext files.
 
-- [ ] Add a functional address bar
+- [x] Add a functional address bar
 - [ ] Add interaction with links (gemini or otherwise)
 
 ## Inspired by
