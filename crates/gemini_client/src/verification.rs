@@ -6,8 +6,6 @@ use rustls::{
     pki_types,
 };
 
-// From https://users.rust-lang.org/t/rustls-connecting-without-certificate-in-local-network/83822/5
-// and https://gist.github.com/doroved/2c92ddd5e33f257f901c763b728d1b61
 #[derive(Debug)]
 pub struct AllowUnknownIssuerVerification {
     inner: Arc<WebPkiServerVerifier>,
