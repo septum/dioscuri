@@ -1,17 +1,28 @@
-[package]
-name = "dioscuri"
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
 authors = ["Orlando Valverde <orlando.jesig.va@gmail.com>"]
 license = "MIT OR Apache-2.0"
 
-[dependencies]
+[package]
+name = "dioscuri"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[workspace.dependencies]
 color-eyre = "0.6"
+
+[dependencies]
+gemini_client = { path = "crates/gemini_client" }
+color-eyre = { workspace = true }
 crossterm = "0.29"
 ratatui = { version = "0.29", features = ["unstable-rendered-line-info"] }
-rustls = "0.23"
-webpki-roots = "1.0"
-
 
 [profile.dev]
 opt-level = 1
