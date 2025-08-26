@@ -5,8 +5,8 @@ use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use gemini_client::GeminiClient;
 use ratatui::{
     DefaultTerminal, Frame,
-    layout::{Constraint, Layout, Position},
-    style::Stylize,
+    layout::{Alignment, Constraint, Layout, Position},
+    style::{Style, Stylize},
     text::{Line, Text},
     widgets::{
         Block, Paragraph, ScrollDirection, Scrollbar, ScrollbarOrientation, ScrollbarState,
@@ -15,7 +15,7 @@ use ratatui::{
 };
 
 const DEFAULT_URL: &str = "gemini://geminiprotocol.net/";
-const TICK_RATE: Duration = Duration::from_millis(300);
+const UPDATE_TICK_RATE: Duration = Duration::from_millis(300);
 
 #[derive(Default)]
 struct Scroll {
@@ -65,13 +65,13 @@ impl App {
         let mut last_tick = Instant::now();
 
         while !self.exit {
-            let timeout = TICK_RATE.saturating_sub(last_tick.elapsed());
+            let timeout = UPDATE_TICK_RATE.saturating_sub(last_tick.elapsed());
 
             if self.handle_events(timeout)? {
                 terminal.draw(|frame| self.draw(frame))?;
             }
 
-            if last_tick.elapsed() >= TICK_RATE {
+            if last_tick.elapsed() >= UPDATE_TICK_RATE {
                 last_tick = Instant::now();
             }
         }
@@ -84,7 +84,14 @@ impl App {
         let url_block = Block::bordered().title(app_title);
         let url = Text::from(self.input.value.clone());
 
-        let body_block = Block::bordered();
+        let instructions = if self.input.mode == InputMode::Normal {
+            Line::from(" </> - Edit the address ".bold()).alignment(Alignment::Right)
+        } else {
+            Line::from(" <ENTER> - Request address | <ESC> - Focus the body ".bold())
+                .alignment(Alignment::Right)
+        };
+
+        let mut body_block = Block::bordered().title_bottom(instructions);
 
         let [top, bottom] =
             Layout::vertical([Constraint::Length(3), Constraint::Fill(1)]).areas(frame.area());
@@ -99,6 +106,8 @@ impl App {
             ));
         } else {
             address_bar.render(top, frame.buffer_mut());
+
+            body_block = body_block.border_style(Style::new().blue());
         }
 
         let body_paragraph = Paragraph::new(self.body.replace("\t", " "))
@@ -117,11 +126,7 @@ impl App {
 
         self.scroll.state = self.scroll.state.content_length(self.scroll.max);
 
-        if self.input.mode == InputMode::Normal {
-            body_paragraph.blue().render(bottom, frame.buffer_mut());
-        } else {
-            body_paragraph.render(bottom, frame.buffer_mut());
-        }
+        body_paragraph.render(bottom, frame.buffer_mut());
 
         Scrollbar::new(ScrollbarOrientation::VerticalRight).render(
             bottom,
@@ -213,10 +218,6 @@ impl App {
         self.move_cursor_right();
     }
 
-    /// Returns the byte index based on the character position.
-    ///
-    /// Since each character in a string can be contain multiple bytes, it's necessary to calculate
-    /// the byte index based on the index of the character.
     fn byte_index(&self) -> usize {
         self.input
             .value
@@ -229,20 +230,12 @@ impl App {
     fn delete_char(&mut self) {
         let is_not_cursor_leftmost = self.input.character_index != 0;
         if is_not_cursor_leftmost {
-            // Method "remove" is not used on the saved text for deleting the selected char.
-            // Reason: Using remove on String works on bytes instead of the chars.
-            // Using remove would require special care because of char boundaries.
-
             let current_index = self.input.character_index;
             let from_left_to_current_index = current_index - 1;
 
-            // Getting all characters before the selected character.
             let before_char_to_delete = self.input.value.chars().take(from_left_to_current_index);
-            // Getting all characters after selected character.
             let after_char_to_delete = self.input.value.chars().skip(current_index);
 
-            // Put all characters together except the selected one.
-            // By leaving the selected one out, it is forgotten and therefore deleted.
             self.input.value = before_char_to_delete.chain(after_char_to_delete).collect();
             self.move_cursor_left();
         }
