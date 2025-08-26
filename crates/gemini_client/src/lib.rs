@@ -134,3 +134,9 @@ impl GeminiClient {
         Ok(StreamOwned::new(connection, socket))
     }
 }
+
+impl Default for GeminiClient {
+    fn default() -> Self {
+        Self::new()
+    }
+}
