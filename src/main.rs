@@ -28,7 +28,7 @@ struct Scroll {
 #[derive(PartialEq, Eq)]
 enum InputMode {
     Normal,
-    Editing,
+    Edit,
 }
 
 enum Status {
@@ -46,7 +46,7 @@ impl Default for Input {
     fn default() -> Self {
         Self {
             value: String::from(DEFAULT_URL),
-            mode: InputMode::Editing,
+            mode: InputMode::Edit,
             index: DEFAULT_URL.len(),
         }
     }
@@ -107,7 +107,7 @@ impl App {
         let block = Block::bordered().title(title);
         let url = Text::from(self.input.value.clone());
 
-        let address_bar = if self.input.mode == InputMode::Editing {
+        let address_bar = if self.input.mode == InputMode::Edit {
             Paragraph::new(url).block(block).blue()
         } else {
             Paragraph::new(url).block(block)
@@ -115,7 +115,7 @@ impl App {
 
         address_bar.render(area, frame.buffer_mut());
 
-        if self.input.mode == InputMode::Editing {
+        if self.input.mode == InputMode::Edit {
             frame.set_cursor_position(Position::new(
                 area.x + self.input.index as u16 + 1,
                 area.y + 1,
@@ -125,9 +125,9 @@ impl App {
 
     fn draw_body(&mut self, buffer: &mut Buffer, area: Rect) {
         let instructions = if self.input.mode == InputMode::Normal {
-            " <SLASH> - Edit the address "
+            " <SLASH> - Edit Mode | <ESC> - Exit App "
         } else {
-            " <ENTER> - Request address | <ESC> - Focus the body "
+            " <ENTER> - Submit Request | <ESC> - Normal Mode "
         };
         let instructions = Line::from(instructions.bold()).alignment(Alignment::Right);
 
@@ -170,17 +170,17 @@ impl App {
                         InputMode::Normal => match key_event.code {
                             KeyCode::Up => self.scroll_up(),
                             KeyCode::Down => self.scroll_down(),
-                            KeyCode::Char('/') => self.enter_editing_mode(),
+                            KeyCode::Char('/') => self.enter_edit_mode(),
                             KeyCode::Esc => return Ok(Status::Exit),
                             _ => return Ok(Status::Running(false)),
                         },
-                        InputMode::Editing => match key_event.code {
+                        InputMode::Edit => match key_event.code {
                             KeyCode::Enter => self.request_url()?,
                             KeyCode::Char(char) => self.enter_char(char),
                             KeyCode::Backspace => self.delete_char(),
                             KeyCode::Left => self.move_cursor_left(),
                             KeyCode::Right => self.move_cursor_right(),
-                            KeyCode::Esc => self.exit_editing_mode(),
+                            KeyCode::Esc => self.exit_edit_mode(),
                             _ => return Ok(Status::Running(false)),
                         },
                     };
@@ -208,14 +208,12 @@ impl App {
         }
     }
 
-    fn exit_editing_mode(&mut self) {
-        if !self.body.is_empty() {
-            self.input.mode = InputMode::Normal;
-        }
+    fn exit_edit_mode(&mut self) {
+        self.input.mode = InputMode::Normal;
     }
 
-    fn enter_editing_mode(&mut self) {
-        self.input.mode = InputMode::Editing;
+    fn enter_edit_mode(&mut self) {
+        self.input.mode = InputMode::Edit;
         self.reset_cursor();
     }
 
